@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Меню — Shaurmeals</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.prod.js"></script>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="header-inner">
+      <div class="logo">SHAUR<span>MEALS</span></div>
+      <nav>
+        <router-link to="/">Шаурма</router-link>
+        <router-link to="/klyar">В кляре</router-link>
+        <router-link to="/snacks">Перекуси</router-link>
+        <router-link to="/drinks">Напитки</router-link>
+        <router-link to="/desserts">Сладкое</router-link>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <router-view v-slot="{ Component }">
+      <transition name="fade" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
+  </main>
+</div>
+
+<script>
+const { createApp, ref, computed } = Vue;
+const { createRouter, createWebHashHistory, RouterLink, RouterView } = VueRouter;
+
+/* DATA/Данные */
+const shawarmaItems = [
+  { id:1,  name:'Очень сытная',        desc:'Курица • Овощи • Сыр • Соус • Картофель', price:269, priceXL:349, weight:'350г / 500г', badges:[] },
+  { id:2,  name:'Классическая',        desc:'Курица • Томат • Огурец • Лук • Соус',    price:239, priceXL:319, weight:'300г / 430г', badges:[] },
+  { id:3,  name:'С наггетсами',        desc:'Наггетсы • Овощи • Сыр • Соус',           price:269, priceXL:359, weight:'300г / 430г', badges:['new'] },
+  { id:4,  name:'Антикризисная',       desc:'Курица • Лук • Соус',                     price:169, priceXL:239, weight:'250г / 350г', badges:[] },
+  { id:5,  name:'Азиатская',           desc:'Курица • Кунжут • Терияки • Пекинская капуста', price:219, priceXL:299, weight:'300г / 430г', badges:[] },
+  { id:6,  name:'Сырная',             desc:'Курица • Двойной сыр • Овощи • Соус',     price:239, priceXL:329, weight:'310г / 440г', badges:[] },
+  { id:7,  name:'С грибами',           desc:'Курица • Шампиньоны • Сыр • Перец • Соус', price:239, priceXL:329, weight:'310г / 440г', badges:[] },
+  { id:8,  name:'Деревенская',         desc:'Курица • Помидор • Перец • Зелень • Соус', price:239, priceXL:329, weight:'300г / 430г', badges:[] },
+  { id:9,  name:'Премиум',             desc:'Мраморная говядина • Лук • Овощи • Соус', price:329, priceXL:439, weight:'350г / 0,5 кг', badges:['wow'] },
+  { id:10, name:'Итальянская',         desc:'Курица • Томаты • Оливки • Маринованный огурец', price:269, priceXL:349, weight:'310г / 440г', badges:[] },
+  { id:11, name:'Барбекю',             desc:'Курица • Бекон • Маринованный огурец • Соус', price:259, priceXL:349, weight:'320г / 450г', badges:[] },
+  { id:12, name:'Веганская с тофу',    desc:'Тофу • Овощи • Сыр • Тхуй',              price:189, priceXL:259, weight:'290г / 400г', badges:['veg'] },
+  { id:13, name:'Фитнес 355 ккал',     desc:'Курица • Овощи • Лёгкий соус',           price:229, priceXL:null, weight:'280г', badges:['fit'] },
+  { id:14, name:'Детская',             desc:'Курочка • Овощи • Сыр • Соус',           price:169, priceXL:null, weight:'200г', badges:[] },
+];
+
+const klyarItems = [
+  { id:20, name:'Фирменная в кляре',  desc:'Сырная • Курица • Хрустящий кляр',        price:259, priceXL:null, weight:'270г', badges:['hit'] },
+  { id:21, name:'Сырная в кляре',     desc:'Сыр • Курица • Кляр',                     price:219, priceXL:null, weight:'250г', badges:[] },
+];
+
+const snackItems = [
+  { id:30, name:'Шаур-дог',           desc:'Сосиска • Шаурма внутри • Соус',         prices:[189,249,299], sizes:['Мини','Стандарт','Большой'], weight:'150г / 200г / 250г', badges:['hit'] },
+  { id:31, name:'Сырный шаур-дог',    desc:'Двойной сыр • Сосиска • Шаурма',         prices:[289],         sizes:['Стандарт'],                  weight:'220г',               badges:[] },
+  { id:32, name:'Сэндвич ветчина-бекон', desc:'Ветчина • Бекон • Сыр • Огурец • Соус', prices:[169],       sizes:['Один размер'],               weight:'180г',               badges:[] },
+  { id:33, name:'Сэндвич с курицей',  desc:'Курица • Листья • Сыр • Соус',           prices:[169],         sizes:['Один размер'],               weight:'180г',               badges:[] },
+  { id:34, name:'Наггетсы',           desc:'Хрустящие наггетсы из куриного филе',    prices:[179,329],     sizes:['6 штук','12 штук'],          weight:'150г / 280г',        badges:[] },
+  { id:35, name:'Картошка Фри',       desc:'Хрустящий картофель фри',               prices:[109,149],     sizes:['100г','150г'],               weight:'100г / 150г',        badges:[] },
+];
+
+const teaItems = [
+  { name:'Чёрный / Зелёный чай', vol:'400 мл', price:49 },
+  { name:'Базиликовый',           vol:'400 мл', price:79 },
+  { name:'Фруктовый',             vol:'400 мл', price:89 },
+  { name:'Тропический',           vol:'400 мл', price:89 },
+  { name:'Сибирский',             vol:'400 мл', price:99 },
+  { name:'Таёжный',               vol:'400 мл', price:119 },
+];
+
+const coffeeItems = [
+  { name:'Американо',  vol:'280 мл / 380 мл', price:89,  priceL:139 },
+  { name:'Капучино',   vol:'200 мл / 400 мл', price:99,  priceL:149 },
+  { name:'Латте',      vol:'300 мл',           price:129, priceL:null },
+];
+
+const otherDrinks = [
+  { name:'Милкшейк',           vol:'200 мл / 500 мл', price:129, priceL:199,  flavors:'Ваниль / Шоколад / Клубника' },
+  { name:'Морс клюквенный',    vol:'300 мл / 500 мл', price:89,  priceL:129,  flavors:'' },
+  { name:'Горячий шоколад',    vol:'300 мл',           price:159, priceL:null, flavors:'' },
+];
+
+const dessertItems = [
+  { id:50, name:'Десерт ShaurMeals', desc:'Мороженое • Карамель • Печенье',          price:249, priceXL:null, weight:'200г', badges:['new'] },
+  { id:51, name:'Сладкая Шаурма',   desc:'Клубника • Банан • Крем-чиз • Шоколад',  price:269, priceXL:null, weight:'260г', badges:['hit'] },
+];
+
+/* COMPONENTS/компоненты */
+
+const MenuCard = {
+  props: ['item', 'size'],
+  template: `
+    <div class="card">
+      <div class="badges" v-if="item.badges && item.badges.length">
+        <span v-for="b in item.badges" :key="b" :class="'badge badge-'+b">
+          {{ {'new':'Новинка','hit':'Хит','veg':'Веган','wow':'WOW SIZE','fit':'Фитнес'}[b] }}
+        </span>
+      </div>
+      <div class="card-name">{{ item.name }}</div>
+      <div class="card-desc">{{ item.desc }}</div>
+      <div class="card-footer">
+        <div>
+          <div class="card-price">{{ currentPrice }}<span>₽</span></div>
+          <div class="card-weight">{{ item.weight }}</div>
+        </div>
+        <div v-if="item.priceXL && size === 'XL'" style="font-size:10px;color:var(--muted);">XXL</div>
+      </div>
+    </div>
+  `,
+  computed: {
+    currentPrice() {
+      if (this.size === 'XL' && this.item.priceXL) return this.item.priceXL;
+      return this.item.price;
+    }
+  }
+};
+
+/* PAGE: SHAWARMA/Шаурма */
+const ShawarmaPage = {
+  components: { MenuCard },
+  data() { return { size: 'Обычная', sizes: ['Обычная', 'XL'] }; },
+  template: `
+    <div>
+      <div class="section-title">Шаурма</div>
+      <div class="size-toggle">
+        <button v-for="s in sizes" :key="s" :class="{active: size===s}" @click="size=s">{{ s }}</button>
+      </div>
+      <div class="grid">
+        <menu-card v-for="item in items" :key="item.id" :item="item" :size="size === 'XL' ? 'XL' : 'N'" />
+      </div>
+    </div>
+  `,
+  data() { return { items: shawarmaItems, size: 'Обычная', sizes: ['Обычная', 'XL'] }; }
+};
+
+/* PAGE: KLYAR/В Кляре */
+const KlyarPage = {
+  components: { MenuCard },
+  data() { return { items: klyarItems }; },
+  template: `
+    <div>
+      <div class="section-title">В кляре</div>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:22px;">Хрустящая шаурма в фирменном кляре — без добавок</p>
+      <div class="grid">
+        <menu-card v-for="item in items" :key="item.id" :item="item" size="N" />
+      </div>
+    </div>
+  `
+};
+
+/* PAGE: SNACKS/Закуски */
+const SnacksPage = {
+  data() { return { items: snackItems }; },
+  template: `
+    <div>
+      <div class="section-title">Перекуси</div>
+
+      <!-- Пита с курицей featured -->
+      <div class="card pita-card" style="margin-bottom:24px;">
+        <div>
+          <div class="pita-name">Пита с курицей</div>
+          <div class="pita-desc">Курочка • Бекон • Сыр • Жареный лук • Овощи • Соус</div>
+        </div>
+        <div class="pita-price">239<span>₽</span> <small style="font-size:16px;opacity:.6;">/ 280₽</small></div>
+      </div>
+
+      <div class="grid">
+        <div class="card" v-for="item in items" :key="item.id">
+          <div class="badges" v-if="item.badges.length">
+            <span v-for="b in item.badges" :key="b" :class="'badge badge-'+b">
+              {{ {'hit':'Хит','new':'Новинка'}[b] }}
+            </span>
+          </div>
+          <div class="card-name">{{ item.name }}</div>
+          <div class="card-desc">{{ item.desc }}</div>
+          <div class="card-footer">
+            <div>
+              <div v-if="item.prices.length === 1" class="card-price">{{ item.prices[0] }}<span>₽</span></div>
+              <div v-else>
+                <div v-for="(p,i) in item.prices" :key="i" style="display:inline-block;margin-right:10px;">
+                  <span style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--yellow);">{{ p }}</span>
+                  <span style="font-size:12px;color:var(--muted);">₽</span>
+                </div>
+              </div>
+              <div class="card-weight">{{ item.sizes.join(' / ') }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+};
+
+/* PAGE: DRINKS/Напитки */
+const DrinksPage = {
+  data() { return { teaItems, coffeeItems, otherDrinks }; },
+  template: `
+    <div>
+      <div class="section-title">Напитки</div>
+
+      <div class="drinks-section">
+        <div class="drinks-label">☕ Чай — 400 мл</div>
+        <div class="drinks-grid">
+          <div class="drink-row" v-for="t in teaItems" :key="t.name">
+            <div>
+              <div class="drink-name">{{ t.name }}</div>
+              <div class="drink-meta">{{ t.vol }}</div>
+            </div>
+            <div class="drink-price">{{ t.price }}<small style="font-size:13px;color:var(--muted)">₽</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drinks-section">
+        <div class="drinks-label">☕ Кофе</div>
+        <div class="drinks-grid">
+          <div class="drink-row" v-for="c in coffeeItems" :key="c.name">
+            <div>
+              <div class="drink-name">{{ c.name }}</div>
+              <div class="drink-meta">{{ c.vol }}</div>
+            </div>
+            <div>
+              <div class="drink-price">{{ c.price }}<small style="font-size:13px;color:var(--muted)">₽</small>
+                <span v-if="c.priceL" style="font-size:14px;color:var(--muted);margin-left:6px;">/ {{ c.priceL }}₽</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drinks-section">
+        <div class="drinks-label">🥤 Другие напитки</div>
+        <div class="drinks-grid">
+          <div class="drink-row" v-for="d in otherDrinks" :key="d.name">
+            <div>
+              <div class="drink-name">{{ d.name }}</div>
+              <div class="drink-meta">{{ d.vol }}<span v-if="d.flavors"> • {{ d.flavors }}</span></div>
+            </div>
+            <div>
+              <div class="drink-price">{{ d.price }}<small style="font-size:13px;color:var(--muted)">₽</small>
+                <span v-if="d.priceL" style="font-size:14px;color:var(--muted);margin-left:6px;">/ {{ d.priceL }}₽</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+};
+
+/* PAGE: DESSERTS/Десерты */
+const DessertsPage = {
+  components: { MenuCard },
+  data() { return { items: dessertItems }; },
+  template: `
+    <div>
+      <div class="section-title">Сладкое</div>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:22px;">Десерты и сладкая шаурма — идеально после основного блюда</p>
+      <div class="grid">
+        <menu-card v-for="item in items" :key="item.id" :item="item" size="N" />
+      </div>
+    </div>
+  `
+};
+
+/* ROUTER */
+const router = createRouter({
+  history: createWebHashHistory(),
+  routes: [
+    { path: '/',         component: ShawarmaPage },
+    { path: '/klyar',   component: KlyarPage },
+    { path: '/snacks',  component: SnacksPage },
+    { path: '/drinks',  component: DrinksPage },
+    { path: '/desserts', component: DessertsPage },
+  ],
+  scrollBehavior() { return { top: 0 }; }
+});
+
+/* APP */
+const app = createApp({});
+app.use(router);
+app.component('RouterLink', RouterLink);
+app.component('RouterView', RouterView);
+app.mount('#app');
+</script>
+</body>
+</html>
