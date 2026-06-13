@@ -1,4 +1,4 @@
-# Меню кафе Shaurmeals (menu Shaurmesls)
+# Меню кафе Shaurmeals (menu Shaurmeals)
 
 Одностроничное приложение «Меню кафе Shaurmeals» создано с использованием «Vue Router».
 
